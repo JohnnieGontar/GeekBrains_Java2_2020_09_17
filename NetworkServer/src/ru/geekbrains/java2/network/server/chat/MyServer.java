@@ -16,8 +16,6 @@ public class MyServer {
 
     private final ServerSocket serverSocket;
     private final List<ClientHandler> clients = new ArrayList<>();
-//    private final List<ClientHandler> clients = new CopyOnWriteArrayList<>();
-//    private final List<ClientHandler> clients = Collections.synchronizedList(new ArrayList<>());
     private final AuthService authService;
 
 
@@ -59,12 +57,13 @@ public class MyServer {
         return authService;
     }
 
-    public synchronized void broadcastMessage(String message, ClientHandler sender) throws IOException {
+    public synchronized void broadcastMessage(String message, ClientHandler sender, boolean isServerInfoMsg) throws IOException {
         for (ClientHandler client : clients) {
             if (client == sender) {
                 continue;
             }
-            client.sendMessage(message);
+
+            client.sendMessage(isServerInfoMsg ? null : sender.getUsername(), message);
         }
     }
 
@@ -85,4 +84,11 @@ public class MyServer {
         return false;
     }
 
+    public synchronized void sendPrivateMessage(ClientHandler sender, String recipient, String privateMessage) throws IOException {
+        for (ClientHandler client : clients) {
+            if (client.getUsername().equals(recipient)) {
+                client.sendMessage(sender.getUsername(), privateMessage);
+            }
+        }
+    }
 }
